@@ -4,14 +4,14 @@ import numpy as np
 import faiss
 from sentence_transformers import SentenceTransformer
 from transformers import pipeline
-from transformers import AutoModelForCausalLM, LlamaTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 
 
 
 # **2️⃣ Daten aus der SQLite-Datenbank laden**
 def load_data():
-    connection = sqlite3.connect('database.db')
+    connection = sqlite3.connect('db/database.db')
     df = pd.read_sql_query("SELECT * FROM documents", connection)
     connection.close()
     
@@ -55,45 +55,37 @@ def create_faiss_index(embeddings):
     return index
 
 # **5️⃣ Anfrage verarbeiten und relevante Daten abrufen**
-def retrieve_relevant_data(query, model, index, data, top_k=2):
+def retrieve_relevant_data(query, model, index, data, top_k=5):
     query_embedding = model.encode([query])
-
-    # Suche nach den nächsten Vektoren
     distances, indices = index.search(np.array(query_embedding), k=top_k)
 
-    # Ähnliche Daten ausgeben
     relevant_data = []
-    for idx in indices[0]:  # idx refers to index positions in `data`
-        relevant_data.append(f"Title: {data[idx]['title']}\nContent: {data[idx]['content']}")
+    for i, idx in enumerate(indices[0]):
+        if distances[0][i] < 1.5:  # Nur relevante Ergebnisse unter einem Distanzwert nehmen
+            relevant_data.append(f"Title: {data[idx]['title']}\nContent: {data[idx]['content']}")
 
-    # Join all relevant documents into one block of text
     retrieved_text = "\n\n".join(relevant_data)
-
-    print("\n🔍 Ähnliche Daten gefunden:")
-    print(retrieved_text)
-
     return retrieved_text
 
 # **6️⃣ Antwort mit LLM generieren**
 def generate_response(query, retrieved_text, model_llm, tokenizer, device):
-    # Generiere Input-Text
-    input_text = f"{retrieved_text}\n\nFrage: {query}\nAntwort:"
-    input_ids = tokenizer(input_text, return_tensors="pt").input_ids.to(device)
+    messages = [
+        {"role": "system", "content": "Beantworte die Frage basierend auf dem gegebenen Kontext."},
+        {"role": "user", "content": f"Kontext:\n{retrieved_text}\n\nFrage: {query}"}
+    ]
 
-    # Setze `attention_mask` explizit
-    attention_mask = torch.ones_like(input_ids)
+    input_text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    inputs = tokenizer(input_text, return_tensors="pt").to(device)
 
-    # Stelle sicher, dass `pad_token_id` gesetzt ist
-    model_llm.config.pad_token_id = tokenizer.eos_token_id
-
-    # Generiere Antwort mit optimierten Einstellungen
     output = model_llm.generate(
-        input_ids,
-        attention_mask=attention_mask,  # Füge `attention_mask` hinzu
-        max_new_tokens=100
+        inputs.input_ids,
+        max_new_tokens=100,
+        temperature=0.7,
+        top_p=0.9,
+        pad_token_id=tokenizer.eos_token_id
     )
-    response = tokenizer.decode(output[0], skip_special_tokens=True)
 
+    response = tokenizer.decode(output[0], skip_special_tokens=True)
     print("\n🤖 Generierte Antwort:")
     print(response)
 
@@ -111,11 +103,19 @@ if __name__ == "__main__":
     print("\n💬 Gib eine Frage ein oder tippe 'exit', um zu beenden.\n")
 
     # **Modell nur einmal laden!**
-    model_name = "HuggingFaceH4/zephyr-7b-alpha"
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # Wähle ein kleineres Modell
+    model_name = "deepseek-ai/deepseek-llm-7b-chat"
 
-    tokenizer = LlamaTokenizer.from_pretrained(model_name, use_fast=False)
-    model_llm = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).to(device)
+    # Prüfe, ob CUDA verfügbar ist
+    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+    model_llm = AutoModelForCausalLM.from_pretrained(
+    model_name,
+    torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+    device_map="auto",
+    trust_remote_code=True
+    )
+
+
 
     while True:
         query = input("❓ Frage: ").strip()
@@ -129,5 +129,7 @@ if __name__ == "__main__":
         if not retrieved_text.strip():
             print("\n⚠️ Keine passenden Informationen gefunden.\n")
         else:
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
             # **Hier Modell weiterverwenden**
             generate_response(query, retrieved_text, model_llm, tokenizer, device)  

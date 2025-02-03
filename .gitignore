@@ -1,0 +1,52 @@
+# Python spezifische Dateien
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtuelle Umgebungen
+venv/
+.env/
+.virtualenv/
+env/
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
+
+# Logs und temporäre Dateien
+*.log
+*.out
+*.err
+*.pid
+*.seed
+*.bak
+
+# Caches
+.cache/
+*.sqlite3
+
+# IDE/Editor spezifische Dateien
+.vscode/
+.idea/
+*.iml
+
+# Paketverwaltung
+pip-log.txt
+pip-delete-this-directory.txt
+poetry.lock
+Pipfile
+Pipfile.lock
+
+# Debugging & Profiling
+debug.log
+profile/
+
+# Build- und Distributionsdateien
+build/
+dist/
+*.egg-info/
+.eggs/
+MANIFEST
+
+# Docker & Deployment
+docker-compose.override.yml

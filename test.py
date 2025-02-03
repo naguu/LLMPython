@@ -1,6 +1,6 @@
-print("enter text")
+import torch
+import transformers
 
-
-text = input("Enter text: ")
-
-print(text)
+print("PyTorch Version:", torch.__version__)
+print("Transformers Version:", transformers.__version__)
+print("CUDA Verfügbar:", torch.cuda.is_available())

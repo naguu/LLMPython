@@ -2,7 +2,7 @@ import sqlite3
 import json
 
 # Connect to the SQLite database
-connection = sqlite3.connect("database.db")
+connection = sqlite3.connect("db/database.db")
 cursor = connection.cursor()
 
 # Execute the SQL query
