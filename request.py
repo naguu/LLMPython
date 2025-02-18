@@ -61,7 +61,7 @@ def retrieve_relevant_data(query, model, index, data, top_k=5):
 
     relevant_data = []
     for i, idx in enumerate(indices[0]):
-        if distances[0][i] < 1.5:  # Nur relevante Ergebnisse unter einem Distanzwert nehmen
+        if distances[0][i] < 1:  # Nur relevante Ergebnisse unter einem Distanzwert nehmen
             relevant_data.append(f"Title: {data[idx]['title']}\nContent: {data[idx]['content']}")
 
     retrieved_text = "\n\n".join(relevant_data)

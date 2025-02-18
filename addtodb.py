@@ -1,7 +1,7 @@
 import sqlite3
 
 # Verbindung zur SQLite-Datenbank
-connection = sqlite3.connect("database.db")
+connection = sqlite3.connect("db/database.db")
 cursor = connection.cursor()
 
 cur = cursor.execute("SELECT MAX(title) FROM documents")
