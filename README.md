@@ -28,6 +28,14 @@ deactivate
 ```sh
 pip install -r requirements.txt
 ```
+Windows installieren
+
+```
+
+
+Get-Content requirements.txt | ForEach-Object { pip install $_ }
+
+```
 ## 🔄 Update Dependencies Before Pushing
 
 ```sh
