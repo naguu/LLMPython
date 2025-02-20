@@ -50,3 +50,5 @@ MANIFEST
 
 # Docker & Deployment
 docker-compose.override.yml
+
+/db/*
