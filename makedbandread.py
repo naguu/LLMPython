@@ -4,7 +4,7 @@ import os
 import glob
 
 # Define paths
-db_path = os.path.join("db", "databaseBE.db")
+db_path = os.path.join("db", "import.db")
 json_folder = "json"
 
 # Ensure the database directory exists
