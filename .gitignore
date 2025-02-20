@@ -52,3 +52,4 @@ MANIFEST
 docker-compose.override.yml
 
 db/
+db/databaseBE.db
